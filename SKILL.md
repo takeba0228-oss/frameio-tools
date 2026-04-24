@@ -24,22 +24,15 @@ Frame.ioの共有リンクから動画を文字起こしし、CTRの高いサム
 以下のコマンドを実行して文字起こしを取得する:
 
 ```bash
-# 1. Frame.ioからHLS動画URLを取得
-VIDEO_URL=$(cd ~/frameio-tools && node grab-video-url.mjs "<Frame.io URL>" 2>/dev/null)
-
-# 2. 音声抽出（MP3 32kbps）
-ffmpeg -y -i "$VIDEO_URL" -vn -acodec libmp3lame -ar 16000 -ac 1 -b:a 32k /tmp/frameio-transcribe/audio_skill.mp3 -loglevel error 2>/dev/null || true
-
-# 3. Groq APIで文字起こし
-curl -s https://api.groq.com/openai/v1/audio/transcriptions \
-  -H "Authorization: Bearer $GROQ_API_KEY" \
-  -F file=@/tmp/frameio-transcribe/audio_skill.mp3 \
-  -F model="whisper-large-v3" \
-  -F language="ja" \
-  -F response_format="text"
+~/frameio-tools/transcribe.sh "<Frame.io URL>"
 ```
 
-処理が完了したら、文字起こし結果を読み込む。
+transcribe.shが内部で以下を自動実行する:
+1. Playwrightで共有リンクからHLS動画URLを取得
+2. ffmpegで音声抽出（MP3 32kbps）
+3. Groq API（whisper-large-v3）で文字起こし
+
+コマンドの出力から文字起こしテキスト部分を取得して分析に使う。
 
 ### Step 2: 動画内容の分析
 
